@@ -1,5 +1,6 @@
 from bot_token import TOKEN
 import random
+import requests
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message
 from aiogram.filters import Command
@@ -7,6 +8,10 @@ from aiogram.filters import Command
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 ATTEMPTS = 5
+
+animals = {'киска': "('https://api.thecatapi.com/v1/images/search').json()[0]['url']",
+           'собачка': "('https://random.dog/woof.json').json()['url']",
+           'лисичка': "('https://randomfox.ca/floof/').json()['link']"}
 
 user = {'in_game': False,
         'secret_num': None,
@@ -29,7 +34,10 @@ async def process_help(message: Message):
         f'Правила игры:\n\nЯ загадаю число от 1 до 100\n'
         f'А тебе надо его угадать\nУ тебя есть {ATTEMPTS} попыток\n'
         f'Доступные команды:\n\n/cancel - выйти из игры\n'
-        f'/stat - посмотреть статистику\nЧтобы начать напиши - давай играть)'
+        f'/stat - посмотреть статистику\nЧтобы начать напиши - давай играть)\n\n'
+        f'Так же я могу присылать картинки разных животных\n'
+        f'Это - киска, собачка и лисичка\n'
+        f'Просто напиши, чьё фото ты хочешь'
     )
 
 
@@ -56,7 +64,7 @@ async def process_start_game(message: Message):
         user['in_game'] = True
         user['secret_num'] = random.randint(1, 100)
         user['attempts'] = ATTEMPTS
-        await message.answer('Я загадл число от 1 до 100\nПопробуй его отгадать')
+        await message.answer('Я загадал число от 1 до 100\nПопробуй его отгадать')
     else:
         await message.answer('Мы уже играем!')
 
@@ -90,6 +98,12 @@ async def process_num_answer(message: Message):
             )
     else:
         await message.answer('Мы ещё не играем')
+
+
+@dp.message(F.text.lower().in_(['киска', 'собачка', 'лисичка']))
+async def send_animal(message: Message):
+    url = eval('requests.get' + animals[message.text.lower()])
+    await message.answer_photo(photo=url)
 
 if __name__ == '__main__':
     dp.run_polling(bot)
